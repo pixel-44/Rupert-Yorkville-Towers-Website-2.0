@@ -1,0 +1,52 @@
+<%- include('partials/head') %>
+
+<section class="wrap section narrow">
+  <h1>Your account</h1>
+  <% if (saved) { %><p class="notice success">Saved.</p><% } %>
+
+  <%- include('partials/errors', { errors: errors }) %>
+
+  <form method="post" action="/account" class="stack">
+    <label>
+      <span>Full name</span>
+      <input type="text" name="name" required value="<%= form.name || '' %>">
+    </label>
+    <label>
+      <span>Personal email</span>
+      <input type="email" name="email" required value="<%= form.email || '' %>">
+    </label>
+    <label>
+      <span>Mobile phone</span>
+      <input type="tel" name="phone" required value="<%= form.phone || '' %>">
+    </label>
+    <label>
+      <span>Apartment</span>
+      <input type="text" name="apartment" required value="<%= form.apartment || '' %>">
+    </label>
+    <label>
+      <span>Short intro</span>
+      <textarea name="bio" rows="3" maxlength="400"><%= form.bio || '' %></textarea>
+    </label>
+    <button class="btn" type="submit">Save changes</button>
+  </form>
+
+  <h2 class="section-gap">Change password</h2>
+  <form method="post" action="/account/password" class="stack">
+    <label>
+      <span>Current password</span>
+      <input type="password" name="current_password" required autocomplete="current-password">
+    </label>
+    <label>
+      <span>New password</span>
+      <input type="password" name="new_password" required minlength="8" autocomplete="new-password">
+    </label>
+    <label>
+      <span>Confirm new password</span>
+      <input type="password" name="confirm_password" required minlength="8" autocomplete="new-password">
+    </label>
+    <p class="fine">Changing your password signs you out everywhere else.</p>
+    <button class="btn btn-ghost" type="submit">Update password</button>
+  </form>
+</section>
+
+<%- include('partials/foot') %>

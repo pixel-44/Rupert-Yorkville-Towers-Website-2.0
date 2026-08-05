@@ -1,0 +1,96 @@
+<%- include('partials/head') %>
+
+<section class="wrap section narrow">
+  <h1><%= title %></h1>
+  <p class="lede-small">Be specific — neighbors decide from what's written here.</p>
+
+  <%- include('partials/errors', { errors: errors }) %>
+
+  <form method="post" action="<%= action %>" class="stack">
+    <fieldset class="choice">
+      <legend>What is this post?</legend>
+      <label class="radio">
+        <input type="radio" name="kind" value="need" <%= form.kind !== 'offer' ? 'checked' : '' %>>
+        <span><strong>I need something done</strong><small>Someone in the building can take it on.</small></span>
+      </label>
+      <label class="radio">
+        <input type="radio" name="kind" value="offer" <%= form.kind === 'offer' ? 'checked' : '' %>>
+        <span><strong>I'm offering a service</strong><small>Neighbors can book you for it.</small></span>
+      </label>
+    </fieldset>
+
+    <label>
+      <span>Title</span>
+      <input type="text" name="title" maxlength="120" required
+             value="<%= form.title || '' %>" placeholder="Evening dog walk for a friendly beagle">
+    </label>
+
+    <label>
+      <span>Category</span>
+      <select name="category" required>
+        <option value="">Choose one…</option>
+        <% categories.forEach(function (c) { %>
+          <option value="<%= c %>" <%= form.category === c ? 'selected' : '' %>><%= c %></option>
+        <% }); %>
+      </select>
+    </label>
+
+    <label>
+      <span>Details</span>
+      <textarea name="description" rows="6" maxlength="4000" required
+        placeholder="What's involved, when, and anything a neighbor should know."><%= form.description || '' %></textarea>
+    </label>
+
+    <label>
+      <span>Apartment</span>
+      <input type="text" name="apartment" maxlength="20" required value="<%= form.apartment || '' %>">
+    </label>
+
+    <fieldset class="price-row">
+      <legend>Price range (leave blank if open to offers)</legend>
+      <label>
+        <span>From $</span>
+        <input type="number" name="price_min" min="0" max="100000" step="1"
+               value="<%= form.price_min == null ? '' : form.price_min %>">
+      </label>
+      <label>
+        <span>To $</span>
+        <input type="number" name="price_max" min="0" max="100000" step="1"
+               value="<%= form.price_max == null ? '' : form.price_max %>">
+      </label>
+      <label>
+        <span>Per</span>
+        <select name="price_unit">
+          <% Object.keys(priceUnits).forEach(function (key) { %>
+            <option value="<%= key %>" <%= form.price_unit === key ? 'selected' : '' %>><%= priceUnits[key] %></option>
+          <% }); %>
+        </select>
+      </label>
+    </fieldset>
+
+    <fieldset class="choice">
+      <legend>How often?</legend>
+      <label class="radio">
+        <input type="radio" name="schedule" value="one_time" <%= form.schedule !== 'recurring' ? 'checked' : '' %>>
+        <span><strong>One-time</strong><small>A single job.</small></span>
+      </label>
+      <label class="radio">
+        <input type="radio" name="schedule" value="recurring" <%= form.schedule === 'recurring' ? 'checked' : '' %>>
+        <span><strong>Recurring</strong><small>Repeats on a schedule.</small></span>
+      </label>
+    </fieldset>
+
+    <label>
+      <span>If recurring, how often?</span>
+      <input type="text" name="recurrence" maxlength="160"
+             value="<%= form.recurrence || '' %>" placeholder="Weekdays around 6pm">
+    </label>
+
+    <div class="row">
+      <button class="btn" type="submit"><%= submitLabel %></button>
+      <a class="btn btn-ghost" href="/board">Cancel</a>
+    </div>
+  </form>
+</section>
+
+<%- include('partials/foot') %>

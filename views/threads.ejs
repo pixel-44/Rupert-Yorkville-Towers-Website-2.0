@@ -1,0 +1,30 @@
+<%- include('partials/head') %>
+
+<section class="wrap section narrow">
+  <h1>Messages</h1>
+
+  <% if (!threads.length) { %>
+    <p class="empty">No conversations yet. Accept a post or ask a question and the thread shows up here.</p>
+  <% } else { %>
+    <ul class="thread-list">
+      <% threads.forEach(function (t) { %>
+        <li>
+          <a href="/messages/<%= t.id %>">
+            <div class="thread-head">
+              <strong><%= t.other_name %></strong>
+              <span class="muted">Apt <%= t.other_apartment %></span>
+              <% if (t.unread) { %><span class="badge"><%= t.unread %></span><% } %>
+              <% if (t.last_at) { %><span class="muted right"><%= timeAgo(t.last_at) %></span><% } %>
+            </div>
+            <% if (t.post_title) { %>
+              <div class="thread-post">Re: <%= t.post_title %><% if (t.post_status && t.post_status !== 'open') { %> · <%= t.post_status %><% } %></div>
+            <% } %>
+            <div class="thread-preview"><%= t.last_body ? (t.last_body.length > 110 ? t.last_body.slice(0, 110) + '…' : t.last_body) : 'No messages yet.' %></div>
+          </a>
+        </li>
+      <% }); %>
+    </ul>
+  <% } %>
+</section>
+
+<%- include('partials/foot') %>

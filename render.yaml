@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: rupert-yorkville-board
+    runtime: node
+    plan: starter
+    buildCommand: npm ci
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /data
+    disk:
+      name: rupert-data
+      mountPath: /data
+      sizeGB: 1

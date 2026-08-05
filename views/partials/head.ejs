@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · Rupert Yorkville Towers</title>
+  <meta name="description" content="The resident service board for Rupert Yorkville Towers — neighbors offering and requesting help with dog walking, babysitting, cleaning and more.">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">RYT</span>
+      <span class="brand-text">
+        <strong>Rupert Yorkville Towers</strong>
+        <small>Resident service board</small>
+      </span>
+    </a>
+    <nav class="site-nav">
+      <a href="/board" class="<%= currentPath.startsWith('/board') ? 'active' : '' %>">Board</a>
+      <% if (user) { %>
+        <a href="/posts/new">New post</a>
+        <a href="/messages" class="<%= currentPath.startsWith('/messages') ? 'active' : '' %>">
+          Messages<% if (unread) { %> <span class="badge"><%= unread %></span><% } %>
+        </a>
+        <a href="/my-posts">Your posts</a>
+        <a href="/account">Account</a>
+        <form method="post" action="/logout" class="inline">
+          <button class="link-button" type="submit">Log out</button>
+        </form>
+      <% } else { %>
+        <a href="/login">Log in</a>
+        <a class="btn btn-small" href="/signup">Join the board</a>
+      <% } %>
+    </nav>
+  </div>
+</header>
+<main id="main">

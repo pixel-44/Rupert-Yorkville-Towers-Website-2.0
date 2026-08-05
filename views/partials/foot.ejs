@@ -1,0 +1,27 @@
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div class="footer-about">
+      <strong>Rupert Yorkville Towers</strong>
+      <p>A private bulletin board for residents to offer and request help with everyday tasks — dog walking, babysitting, cleaning and more.</p>
+      <p class="footer-links">
+        <a href="/board">Service board</a> ·
+        <a href="/guidelines">How it works</a> ·
+        <% if (user) { %><a href="/account">Your account</a><% } else { %><a href="/signup">Create an account</a><% } %>
+      </p>
+    </div>
+    <aside class="help-panel" aria-label="User Help">
+      <h2>User Help</h2>
+      <p>Call anytime for questions, improvements, or complaints.</p>
+      <p class="help-contact">
+        <a href="mailto:<%= help.email %>"><%= help.email %></a><br>
+        <a href="tel:<%= help.phoneHref %>"><%= help.phone %></a>
+      </p>
+    </aside>
+  </div>
+</footer>
+<% if (typeof pageScript !== 'undefined' && pageScript) { %>
+  <script src="<%= pageScript %>"></script>
+<% } %>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<article class="card post-card">
+  <div class="card-top">
+    <span class="tag tag-<%= post.kind %>"><%= post.kind === 'need' ? 'Needs help' : 'Offering' %></span>
+    <span class="tag tag-quiet"><%= post.category %></span>
+    <span class="tag tag-quiet"><%= post.schedule === 'recurring' ? 'Recurring' : 'One-time' %></span>
+    <% if (post.status !== 'open') { %>
+      <span class="tag tag-status tag-<%= post.status %>"><%= post.status %></span>
+    <% } %>
+  </div>
+  <h3 class="card-title"><a href="/posts/<%= post.id %>"><%= post.title %></a></h3>
+  <p class="card-body"><%= post.description.length > 160 ? post.description.slice(0, 160) + '…' : post.description %></p>
+  <div class="card-meta">
+    <span class="price"><%= priceLabel(post) %></span>
+    <span>Apt <%= post.apartment %></span>
+    <span><%= post.author_name %></span>
+    <span><%= timeAgo(post.created_at) %></span>
+  </div>
+</article>

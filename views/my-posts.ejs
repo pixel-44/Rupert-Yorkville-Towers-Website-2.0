@@ -1,0 +1,31 @@
+<%- include('partials/head') %>
+
+<section class="wrap section">
+  <div class="section-head">
+    <h1>Your posts</h1>
+    <a class="btn btn-small" href="/posts/new">New post</a>
+  </div>
+
+  <% if (!mine.length) { %>
+    <p class="empty">You haven't posted anything yet.</p>
+  <% } else { %>
+    <div class="grid">
+      <% mine.forEach(function (post) { %>
+        <%- include('partials/post-card', { post: post, priceLabel: priceLabel, timeAgo: timeAgo }) %>
+      <% }); %>
+    </div>
+  <% } %>
+
+  <h2 class="section-gap">Jobs you accepted</h2>
+  <% if (!accepted.length) { %>
+    <p class="empty">Nothing yet. <a href="/board">Browse the board</a> for something to pick up.</p>
+  <% } else { %>
+    <div class="grid">
+      <% accepted.forEach(function (post) { %>
+        <%- include('partials/post-card', { post: post, priceLabel: priceLabel, timeAgo: timeAgo }) %>
+      <% }); %>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/foot') %>

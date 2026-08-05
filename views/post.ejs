@@ -1,0 +1,89 @@
+<%- include('partials/head') %>
+
+<section class="wrap section narrow">
+  <p class="back"><a href="/board">← Back to the board</a></p>
+
+  <article class="detail">
+    <div class="card-top">
+      <span class="tag tag-<%= post.kind %>"><%= post.kind === 'need' ? 'Needs help' : 'Offering' %></span>
+      <span class="tag tag-quiet"><%= post.category %></span>
+      <span class="tag tag-quiet"><%= post.schedule === 'recurring' ? 'Recurring' : 'One-time' %></span>
+      <span class="tag tag-status tag-<%= post.status %>"><%= post.status %></span>
+    </div>
+
+    <h1><%= post.title %></h1>
+    <p class="detail-meta">
+      Posted by <%= author.name %> · Apt <%= post.apartment %> · <%= timeAgo(post.created_at) %>
+    </p>
+
+    <dl class="facts">
+      <div><dt>Price</dt><dd><%= priceLabel(post) %></dd></div>
+      <div><dt>Schedule</dt><dd><%= post.schedule === 'recurring' ? (post.recurrence || 'Recurring') : 'One-time' %></dd></div>
+      <div><dt>Apartment</dt><dd><%= post.apartment %></dd></div>
+      <% if (acceptor) { %>
+        <div><dt>Accepted by</dt><dd><%= acceptor.name %> (Apt <%= acceptor.apartment %>)</dd></div>
+      <% } %>
+    </dl>
+
+    <div class="prose"><%= post.description %></div>
+
+    <% if (showContact) { %>
+      <div class="contact-box">
+        <h2>Contact details</h2>
+        <p>Shared because you two are working together on this post.</p>
+        <p>
+          <strong><%= author.name %></strong> · Apt <%= author.apartment %><br>
+          <a href="mailto:<%= author.email %>"><%= author.email %></a> ·
+          <a href="tel:+1<%= author.phone %>"><%= authorPhone %></a>
+        </p>
+      </div>
+    <% } %>
+  </article>
+
+  <div class="actions">
+    <% if (!user) { %>
+      <p class="notice">
+        <a href="/signup?next=/posts/<%= post.id %>">Create a resident account</a> or
+        <a href="/login?next=/posts/<%= post.id %>">log in</a> to accept this post or message
+        <%= author.name %>.
+      </p>
+    <% } else if (isOwner) { %>
+      <form method="post" action="/posts/<%= post.id %>/status" class="row">
+        <% if (post.status === 'open') { %>
+          <a class="btn btn-ghost" href="/posts/<%= post.id %>/edit">Edit post</a>
+          <button class="btn btn-ghost" name="action" value="cancel" type="submit">Cancel post</button>
+        <% } else if (post.status === 'matched') { %>
+          <button class="btn" name="action" value="complete" type="submit">Mark completed</button>
+          <button class="btn btn-ghost" name="action" value="reopen" type="submit">Unmatch and reopen</button>
+        <% } else { %>
+          <button class="btn btn-ghost" name="action" value="reopen" type="submit">Repost as open</button>
+        <% } %>
+      </form>
+      <% if (post.accepted_by) { %>
+        <p class="hint"><a href="/messages">Open your message thread</a> with <%= acceptor.name %>.</p>
+      <% } %>
+    <% } else if (isAcceptor) { %>
+      <form method="post" action="/posts/<%= post.id %>/status" class="row">
+        <button class="btn" name="action" value="complete" type="submit">Mark completed</button>
+        <button class="btn btn-ghost" name="action" value="withdraw" type="submit">Withdraw</button>
+      </form>
+      <p class="hint"><a href="/messages">Open your message thread</a> with <%= author.name %>.</p>
+    <% } else if (post.status === 'open') { %>
+      <form method="post" action="/posts/<%= post.id %>/accept" class="row">
+        <button class="btn" type="submit">
+          <%= post.kind === 'need' ? 'Accept this job' : 'Book this service' %>
+        </button>
+      </form>
+      <form method="post" action="/posts/<%= post.id %>/ask" class="ask">
+        <label for="ask-body">Have a question first?</label>
+        <textarea id="ask-body" name="body" rows="3" maxlength="4000"
+          placeholder="Ask <%= author.name %> a question before committing…" required></textarea>
+        <button class="btn btn-ghost" type="submit">Send message</button>
+      </form>
+    <% } else { %>
+      <p class="notice">This post is <%= post.status %>, so it can't be accepted right now.</p>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/foot') %>

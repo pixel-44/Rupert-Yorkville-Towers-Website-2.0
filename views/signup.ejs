@@ -1,0 +1,49 @@
+<%- include('partials/head') %>
+
+<section class="wrap section narrow">
+  <h1>Create your resident account</h1>
+  <p class="lede-small">
+    Anyone can browse the board. Posting, accepting and messaging need an account with a
+    real phone number and personal email, so neighbors know who they're dealing with.
+  </p>
+
+  <%- include('partials/errors', { errors: errors }) %>
+
+  <form method="post" action="/signup" class="stack">
+    <input type="hidden" name="next" value="<%= next %>">
+    <label>
+      <span>Full name</span>
+      <input type="text" name="name" required autocomplete="name" value="<%= form.name || '' %>">
+    </label>
+    <label>
+      <span>Personal email</span>
+      <input type="email" name="email" required autocomplete="email" value="<%= form.email || '' %>">
+    </label>
+    <label>
+      <span>Mobile phone</span>
+      <input type="tel" name="phone" required autocomplete="tel" value="<%= form.phone || '' %>" placeholder="(646) 617-0040">
+    </label>
+    <label>
+      <span>Apartment</span>
+      <input type="text" name="apartment" required value="<%= form.apartment || '' %>" placeholder="14C">
+    </label>
+    <label>
+      <span>Short intro (optional)</span>
+      <textarea name="bio" rows="3" maxlength="400" placeholder="Anything neighbors should know — pets, availability, skills."><%= form.bio || '' %></textarea>
+    </label>
+    <label>
+      <span>Password</span>
+      <input type="password" name="password" required minlength="8" autocomplete="new-password">
+    </label>
+    <label>
+      <span>Confirm password</span>
+      <input type="password" name="confirm" required minlength="8" autocomplete="new-password">
+    </label>
+    <p class="fine">Your email and phone stay private until you're matched with a neighbor on a post.</p>
+    <button class="btn" type="submit">Create account</button>
+  </form>
+
+  <p class="alt">Already signed up? <a href="/login">Log in</a>.</p>
+</section>
+
+<%- include('partials/foot') %>

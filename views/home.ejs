@@ -1,0 +1,63 @@
+<%- include('partials/head') %>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">1745 York Avenue · New York, NY</p>
+    <h1>Neighbors helping neighbors, one floor away.</h1>
+    <p class="lede">
+      The Rupert Yorkville Towers service board is where residents post what they need done —
+      and where other residents pick it up. Dog walking, babysitting, cleaning, a hand with
+      groceries. Browse freely; create an account when you're ready to post or accept.
+    </p>
+    <div class="hero-actions">
+      <a class="btn" href="/board">Browse the board</a>
+      <% if (user) { %>
+        <a class="btn btn-ghost" href="/posts/new">Post a job</a>
+      <% } else { %>
+        <a class="btn btn-ghost" href="/signup">Create an account</a>
+      <% } %>
+    </div>
+    <ul class="stats">
+      <li><strong><%= stats.members %></strong> residents signed up</li>
+      <li><strong><%= stats.open_posts %></strong> open posts</li>
+      <li><strong><%= stats.completed %></strong> jobs completed</li>
+    </ul>
+  </div>
+</section>
+
+<section class="wrap section">
+  <h2>How it works</h2>
+  <ol class="steps">
+    <li><strong>Post it.</strong> Say what you need or what you're offering, your apartment, a price range, and whether it's one-time or recurring.</li>
+    <li><strong>Get matched.</strong> A neighbor accepts the post, which locks it to the two of you.</li>
+    <li><strong>Message directly.</strong> Sort out timing and details in a private thread on the site — contact details unlock once you're matched.</li>
+    <li><strong>Mark it done.</strong> Either of you can close the job out when it's finished.</li>
+  </ol>
+</section>
+
+<section class="wrap section">
+  <div class="section-head">
+    <h2>Latest open posts</h2>
+    <a href="/board">See all →</a>
+  </div>
+  <% if (!recent.length) { %>
+    <p class="empty">Nothing on the board yet. <a href="/signup">Create an account</a> and post the first one.</p>
+  <% } else { %>
+    <div class="grid">
+      <% recent.forEach(function (post) { %>
+        <%- include('partials/post-card', { post: post, priceLabel: priceLabel, timeAgo: timeAgo }) %>
+      <% }); %>
+    </div>
+  <% } %>
+</section>
+
+<section class="wrap section">
+  <h2>Common requests in the building</h2>
+  <div class="chips">
+    <% categories.forEach(function (c) { %>
+      <a class="chip" href="/board?category=<%= encodeURIComponent(c) %>"><%= c %></a>
+    <% }); %>
+  </div>
+</section>
+
+<%- include('partials/foot') %>

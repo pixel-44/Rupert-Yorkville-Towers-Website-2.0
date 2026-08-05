@@ -1,0 +1,42 @@
+<%- include('partials/head') %>
+
+<section class="wrap section narrow">
+  <p class="back"><a href="/messages">← All messages</a></p>
+
+  <div class="thread-header">
+    <h1><%= other.name %></h1>
+    <p class="muted">Apt <%= other.apartment %></p>
+    <% if (post) { %>
+      <p class="thread-post">
+        About: <a href="/posts/<%= post.id %>"><%= post.title %></a> · <%= post.status %>
+      </p>
+    <% } %>
+    <% if (post && (post.status === 'matched' || post.status === 'completed') &&
+           (post.user_id === user.id || post.accepted_by === user.id)) { %>
+      <p class="contact-inline">
+        Reach them directly:
+        <a href="mailto:<%= other.email %>"><%= other.email %></a> ·
+        <a href="tel:+1<%= other.phone %>"><%= otherPhone %></a>
+      </p>
+    <% } %>
+  </div>
+
+  <ol class="messages" id="messages" data-convo="<%= convo.id %>"
+      data-last="<%= messages.length ? messages[messages.length - 1].id : 0 %>">
+    <% messages.forEach(function (m) { %>
+      <li class="msg <%= m.sender_id === user.id ? 'mine' : 'theirs' %>">
+        <p class="msg-body"><%= m.body %></p>
+        <p class="msg-time"><%= formatDate(m.created_at) %></p>
+      </li>
+    <% }); %>
+  </ol>
+
+  <form method="post" action="/messages/<%= convo.id %>" class="reply" id="reply-form">
+    <label class="sr-only" for="reply-body">Message</label>
+    <textarea id="reply-body" name="body" rows="3" maxlength="4000" required
+              placeholder="Write a message…"></textarea>
+    <button class="btn" type="submit">Send</button>
+  </form>
+</section>
+
+<%- include('partials/foot', { pageScript: '/thread.js' }) %>

@@ -1,0 +1,69 @@
+<%- include('partials/head') %>
+
+<section class="wrap section">
+  <div class="section-head">
+    <h1>Service board</h1>
+    <% if (user) { %><a class="btn btn-small" href="/posts/new">New post</a><% } %>
+  </div>
+
+  <% if (!user) { %>
+    <p class="notice">You're browsing as a guest. <a href="/signup">Create a resident account</a> to post a job or accept one.</p>
+  <% } %>
+
+  <form class="filters" method="get" action="/board">
+    <label>
+      <span>Search</span>
+      <input type="search" name="q" value="<%= filters.q %>" placeholder="dog, tutoring, 14C…">
+    </label>
+    <label>
+      <span>Type</span>
+      <select name="kind">
+        <option value="">All</option>
+        <option value="need" <%= filters.kind === 'need' ? 'selected' : '' %>>Needs help</option>
+        <option value="offer" <%= filters.kind === 'offer' ? 'selected' : '' %>>Offering help</option>
+      </select>
+    </label>
+    <label>
+      <span>Category</span>
+      <select name="category">
+        <option value="">All</option>
+        <% categories.forEach(function (c) { %>
+          <option value="<%= c %>" <%= filters.category === c ? 'selected' : '' %>><%= c %></option>
+        <% }); %>
+      </select>
+    </label>
+    <label>
+      <span>Schedule</span>
+      <select name="schedule">
+        <option value="">All</option>
+        <option value="one_time" <%= filters.schedule === 'one_time' ? 'selected' : '' %>>One-time</option>
+        <option value="recurring" <%= filters.schedule === 'recurring' ? 'selected' : '' %>>Recurring</option>
+      </select>
+    </label>
+    <label>
+      <span>Status</span>
+      <select name="status">
+        <option value="open" <%= filters.status === 'open' ? 'selected' : '' %>>Open</option>
+        <option value="matched" <%= filters.status === 'matched' ? 'selected' : '' %>>Matched</option>
+        <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+      </select>
+    </label>
+    <div class="filter-actions">
+      <button class="btn btn-small" type="submit">Apply</button>
+      <a class="btn btn-small btn-ghost" href="/board">Reset</a>
+    </div>
+  </form>
+
+  <% if (!posts.length) { %>
+    <p class="empty">No posts match those filters yet.</p>
+  <% } else { %>
+    <p class="result-count"><%= posts.length %> post<%= posts.length === 1 ? '' : 's' %></p>
+    <div class="grid">
+      <% posts.forEach(function (post) { %>
+        <%- include('partials/post-card', { post: post, priceLabel: priceLabel, timeAgo: timeAgo }) %>
+      <% }); %>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/foot') %>
