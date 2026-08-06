@@ -1,0 +1,27 @@
+# Netlify build + routing for the Rupert Yorkville Towers resident board.
+#
+# Static assets (stylesheet, favicon, client script) are served straight from the
+# CDN out of public/. Everything else falls through to the Express app running as
+# a single serverless function.
+
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  # EJS templates and the schema are read from disk at runtime, so they have to
+  # be bundled alongside the function code.
+  included_files = ["views/**", "src/schema.sql"]
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
+  status = 200
+
+[dev]
+  command = "npm start"
+  targetPort = 3000
+  publish = "public"

@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
-# End-to-end pass over the real app: boots a server on a throwaway database,
-# drives it with curl the way a browser would, and checks what comes back.
+# End-to-end pass over the real app: boots a server against a scratch Postgres
+# database, drives it with curl the way a browser would, and checks what comes
+# back.
+#
+# Set TEST_DATABASE_URL (or DATABASE_URL) to a database you don't mind wiping —
+# the run drops every table before it starts.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PORT=${TEST_PORT:-3111}
 B=http://localhost:$PORT
 S=$(mktemp -d)
-DB=$(mktemp -d)
 
-DATA_DIR="$DB" PORT="$PORT" node "$ROOT/server.js" > "$S/server.log" 2>&1 &
+export DATABASE_URL="${TEST_DATABASE_URL:-${DATABASE_URL:-}}"
+if [ -z "$DATABASE_URL" ]; then
+  echo "Set TEST_DATABASE_URL to a throwaway Postgres database before running the tests." >&2
+  exit 1
+fi
+
+node "$ROOT/scripts/migrate.js" --reset > /dev/null
+
+PORT="$PORT" node "$ROOT/server.js" > "$S/server.log" 2>&1 &
 SERVER_PID=$!
-cleanup() { kill "$SERVER_PID" 2>/dev/null || true; rm -rf "$S" "$DB"; }
+cleanup() { kill "$SERVER_PID" 2>/dev/null || true; rm -rf "$S"; }
 trap cleanup EXIT
 
 for _ in $(seq 1 40); do

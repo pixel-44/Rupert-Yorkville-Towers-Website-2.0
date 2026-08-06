@@ -11,15 +11,16 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "bash test/e2e.sh"
+    "migrate": "node scripts/migrate.js",
+    "test": "bash test/e2e.sh && node test/function.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^11.3.0",
     "cookie-parser": "^1.4.6",
     "ejs": "^3.1.10",
     "express": "^4.21.1",
-    "express-rate-limit": "^7.4.0",
-    "helmet": "^8.0.0"
+    "helmet": "^8.0.0",
+    "pg": "^8.22.0",
+    "serverless-http": "^4.0.0"
   }
 }

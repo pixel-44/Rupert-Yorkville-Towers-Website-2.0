@@ -15,12 +15,13 @@ function checkPassword(plain, hash) {
   return bcrypt.compareSync(plain, hash);
 }
 
-function startSession(res, userId) {
+async function startSession(res, userId) {
   const token = crypto.randomBytes(32).toString('hex');
-  db.prepare(
+  await db.run(
     `INSERT INTO sessions (token, user_id, expires_at)
-     VALUES (?, ?, datetime('now', '+${SESSION_DAYS} days'))`
-  ).run(token, userId);
+     VALUES (?, ?, now() + interval '${SESSION_DAYS} days')`,
+    [token, userId]
+  );
   res.cookie(COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
@@ -29,29 +30,32 @@ function startSession(res, userId) {
   });
 }
 
-function endSession(req, res) {
+async function endSession(req, res) {
   const token = req.cookies[COOKIE];
-  if (token) db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
+  if (token) await db.run('DELETE FROM sessions WHERE token = ?', [token]);
   res.clearCookie(COOKIE);
 }
 
 /** Attaches req.user (or null) to every request. */
-function loadUser(req, res, next) {
-  const token = req.cookies[COOKIE];
-  req.user = null;
-  if (token) {
-    const row = db
-      .prepare(
+async function loadUser(req, res, next) {
+  try {
+    const token = req.cookies[COOKIE];
+    req.user = null;
+    if (token) {
+      const row = await db.one(
         `SELECT u.* FROM sessions s
          JOIN users u ON u.id = s.user_id
-         WHERE s.token = ? AND s.expires_at > datetime('now')`
-      )
-      .get(token);
-    if (row) req.user = row;
-    else res.clearCookie(COOKIE);
+         WHERE s.token = ? AND s.expires_at > now()`,
+        [token]
+      );
+      if (row) req.user = row;
+      else res.clearCookie(COOKIE);
+    }
+    res.locals.user = req.user;
+    next();
+  } catch (err) {
+    next(err);
   }
-  res.locals.user = req.user;
-  next();
 }
 
 /** Gate for anything that changes data: browsing stays open to everyone. */
@@ -64,6 +68,35 @@ function requireMember(req, res, next) {
   return res.status(401).json({ error: 'You need a resident account to do that.' });
 }
 
+/**
+ * Password guessing throttle. Serverless instances have no shared memory, so
+ * attempts are counted in the database and apply across the whole site.
+ */
+const ATTEMPT_LIMIT = 40;
+const ATTEMPT_WINDOW_MINUTES = 15;
+
+async function throttleAuth(req, res, next) {
+  try {
+    const ip = req.ip || 'unknown';
+    await db.run('INSERT INTO auth_attempts (ip) VALUES (?)', [ip]);
+    const row = await db.one(
+      `SELECT COUNT(*)::int AS n FROM auth_attempts
+       WHERE ip = ? AND at > now() - interval '${ATTEMPT_WINDOW_MINUTES} minutes'`,
+      [ip]
+    );
+    if (row && row.n > ATTEMPT_LIMIT) {
+      return res.status(429).render('error', {
+        title: 'Too many attempts',
+        message:
+          'Too many sign-in attempts from this connection. Wait a few minutes and try again.',
+      });
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   COOKIE,
   hashPassword,
@@ -72,4 +105,5 @@ module.exports = {
   endSession,
   loadUser,
   requireMember,
+  throttleAuth,
 };

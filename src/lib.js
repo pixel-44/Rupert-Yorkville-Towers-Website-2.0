@@ -64,9 +64,9 @@ function priceLabel(post) {
   return `$${single} ${unit}`.trim();
 }
 
-/** "3 hours ago" style stamps from the UTC timestamps SQLite writes. */
-function timeAgo(sqliteUtc) {
-  const then = new Date(String(sqliteUtc).replace(' ', 'T') + 'Z').getTime();
+/** "3 hours ago" style stamps. Postgres hands back Date objects. */
+function timeAgo(value) {
+  const then = value instanceof Date ? value.getTime() : new Date(value).getTime();
   const seconds = Math.max(1, Math.floor((Date.now() - then) / 1000));
   const mins = seconds / 60;
   const hours = mins / 60;
@@ -80,8 +80,8 @@ function timeAgo(sqliteUtc) {
   return `${Math.floor(days / 365)} yr ago`;
 }
 
-function formatDate(sqliteUtc) {
-  const d = new Date(String(sqliteUtc).replace(' ', 'T') + 'Z');
+function formatDate(value) {
+  const d = value instanceof Date ? value : new Date(value);
   return d.toLocaleString('en-US', {
     timeZone: 'America/New_York',
     month: 'short',
@@ -90,6 +90,14 @@ function formatDate(sqliteUtc) {
     hour: 'numeric',
     minute: '2-digit',
   });
+}
+
+/**
+ * Express 4 does not catch rejected promises from route handlers, so every async
+ * handler is wrapped to hand errors to the error middleware.
+ */
+function route(handler) {
+  return (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 }
 
 module.exports = {
@@ -103,4 +111,5 @@ module.exports = {
   priceLabel,
   timeAgo,
   formatDate,
+  route,
 };

@@ -2,80 +2,83 @@
 
 const fs = require('fs');
 const path = require('path');
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
-fs.mkdirSync(DATA_DIR, { recursive: true });
+const connectionString = process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL;
 
-const db = new Database(path.join(DATA_DIR, 'rupert.db'));
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+if (!connectionString) {
+  throw new Error(
+    'DATABASE_URL is not set. Point it at your Postgres database ' +
+      '(Netlify DB, Neon, Supabase, or a local server) before starting the app.'
+  );
+}
 
-db.exec(`
-CREATE TABLE IF NOT EXISTS users (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  name          TEXT NOT NULL,
-  email         TEXT NOT NULL UNIQUE,
-  phone         TEXT NOT NULL UNIQUE,
-  apartment     TEXT NOT NULL,
-  password_hash TEXT NOT NULL,
-  bio           TEXT NOT NULL DEFAULT '',
-  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
-);
+// Serverless functions run many short-lived instances, so each one keeps a small
+// pool and lets idle connections go rather than holding them open.
+const pool = new Pool({
+  connectionString,
+  max: Number(process.env.PG_POOL_MAX || 3),
+  idleTimeoutMillis: 10_000,
+  connectionTimeoutMillis: 10_000,
+  ...(process.env.PG_SSL_NO_VERIFY === '1' ? { ssl: { rejectUnauthorized: false } } : {}),
+});
 
-CREATE TABLE IF NOT EXISTS sessions (
-  token      TEXT PRIMARY KEY,
-  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  expires_at TEXT NOT NULL
-);
+pool.on('error', (err) => console.error('idle postgres client error', err));
 
-CREATE TABLE IF NOT EXISTS posts (
-  id             INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  kind           TEXT NOT NULL CHECK (kind IN ('need','offer')),
-  category       TEXT NOT NULL,
-  title          TEXT NOT NULL,
-  description    TEXT NOT NULL,
-  apartment      TEXT NOT NULL,
-  price_min      INTEGER,
-  price_max      INTEGER,
-  price_unit     TEXT NOT NULL DEFAULT 'total',
-  schedule       TEXT NOT NULL CHECK (schedule IN ('one_time','recurring')),
-  recurrence     TEXT NOT NULL DEFAULT '',
-  status         TEXT NOT NULL DEFAULT 'open'
-                 CHECK (status IN ('open','matched','completed','cancelled')),
-  accepted_by    INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  accepted_at    TEXT,
-  created_at     TEXT NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_posts_status  ON posts(status, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_posts_user    ON posts(user_id);
+/** Queries are written with `?` placeholders and translated to Postgres's $1, $2… */
+function toPg(sql) {
+  let i = 0;
+  return sql.replace(/\?/g, () => `$${++i}`);
+}
 
-CREATE TABLE IF NOT EXISTS conversations (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  post_id    INTEGER REFERENCES posts(id) ON DELETE SET NULL,
-  user_a     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  user_b     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  UNIQUE (post_id, user_a, user_b)
-);
+async function all(sql, params = []) {
+  const result = await pool.query(toPg(sql), params);
+  return result.rows;
+}
 
-CREATE TABLE IF NOT EXISTS messages (
-  id              INTEGER PRIMARY KEY AUTOINCREMENT,
-  conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-  sender_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  body            TEXT NOT NULL,
-  created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-  read_at         TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_messages_convo ON messages(conversation_id, id);
-`);
+async function one(sql, params = []) {
+  const rows = await all(sql, params);
+  return rows[0] || null;
+}
 
-// Drop expired sessions on boot and hourly thereafter.
-const purgeSessions = () =>
-  db.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')").run();
-purgeSessions();
-setInterval(purgeSessions, 60 * 60 * 1000).unref();
+/** Returns the number of rows affected — used to detect lost races. */
+async function run(sql, params = []) {
+  const result = await pool.query(toPg(sql), params);
+  return result.rowCount;
+}
 
-module.exports = db;
+const SCHEMA_LOCK = 8_140_233; // Arbitrary, but stable across deploys.
+let schemaReady = null;
+
+async function applySchema() {
+  const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+  const client = await pool.connect();
+  try {
+    // Two cold starts can race here; the lock makes the loser wait rather than
+    // trip over half-created tables.
+    await client.query('SELECT pg_advisory_lock($1)', [SCHEMA_LOCK]);
+    await client.query(sql);
+    await client.query('SELECT pg_advisory_unlock($1)', [SCHEMA_LOCK]);
+  } finally {
+    client.release();
+  }
+}
+
+/** Awaited once per instance before the first query touches a table. */
+function ready() {
+  if (!schemaReady) {
+    schemaReady = applySchema().catch((err) => {
+      schemaReady = null; // Let the next request retry instead of failing forever.
+      throw err;
+    });
+  }
+  return schemaReady;
+}
+
+/** Housekeeping that would otherwise need a cron: cheap, and safe to repeat. */
+async function purgeExpired() {
+  await run('DELETE FROM sessions WHERE expires_at < now()');
+  await run("DELETE FROM auth_attempts WHERE at < now() - interval '1 day'");
+}
+
+module.exports = { pool, all, one, run, ready, purgeExpired };
