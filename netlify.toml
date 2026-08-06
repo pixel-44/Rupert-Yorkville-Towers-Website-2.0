@@ -21,6 +21,12 @@
   to = "/.netlify/functions/server"
   status = 200
 
+# Prompts for these during a "Deploy to Netlify" one-click install, so the site
+# is configured before its first build instead of after.
+[template.environment]
+  DATABASE_URL = "Postgres connection string — from Netlify DB, Neon, or Supabase. Leave blank if you added the Netlify DB extension."
+  NODE_ENV = "Set to: production"
+
 [dev]
   command = "npm start"
   targetPort = 3000

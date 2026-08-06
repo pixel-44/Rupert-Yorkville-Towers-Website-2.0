@@ -10,6 +10,15 @@ real mobile number and a personal email address.
 Runs on **Netlify**: static assets from the CDN, the Express app as a single serverless
 function, and Postgres for storage.
 
+## Put it online
+
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/pixel-44/Rupert-Yorkville-Towers-Website-2.0)
+
+That button creates the site, connects this repository, and asks for the two environment
+variables below. Add the Netlify DB extension when prompted (or paste your own Postgres URL)
+and the first deploy comes back with a live `*.netlify.app` address. Details and the manual
+route are under [Deploying to Netlify](#deploying-to-netlify).
+
 ## What's in it
 
 - **Accounts** — name, personal email, mobile number, apartment, password (bcrypt). Sessions
