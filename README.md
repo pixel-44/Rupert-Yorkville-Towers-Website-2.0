@@ -10,6 +10,10 @@ real mobile number and a personal email address.
 Runs on **Netlify**: static assets from the CDN, the Express app as a single serverless
 function, and Postgres for storage.
 
+This repository also hosts **[Atelier](docs/atelier.md)**, a custom apparel design studio at
+`/atelier/` — a 3D garment editor that exports a spec sheet a tailor can cut from. It is a
+separate, entirely static application and shares nothing with the board but the deployment.
+
 ## Put it online
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/pixel-44/Rupert-Yorkville-Towers-Website-2.0)
@@ -123,4 +127,8 @@ scripts/migrate.js         Apply schema; --reset drops everything first
 views/                     EJS templates
 public/                    CDN-served stylesheet, client script, favicon
 test/                      End-to-end and function-handler suites
+
+public/atelier/            Atelier, the apparel design studio — see docs/atelier.md
+netlify/functions/assistant.js  Atelier's optional design-assistant endpoint
+docs/atelier.md            Atelier's architecture and scope notes
 ```

@@ -16,6 +16,13 @@
   # be bundled alongside the function code.
   included_files = ["views/**", "src/schema.sql"]
 
+# Atelier's optional design-assistant interpreter. Everything else about the
+# studio is static and comes straight off the CDN out of public/atelier/.
+[[redirects]]
+  from = "/api/assistant"
+  to = "/.netlify/functions/assistant"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/server"
@@ -26,6 +33,7 @@
 [template.environment]
   DATABASE_URL = "Postgres connection string — from Netlify DB, Neon, or Supabase. Leave blank if you added the Netlify DB extension."
   NODE_ENV = "Set to: production"
+  ANTHROPIC_API_KEY = "Optional. Only widens what Atelier's design assistant understands — it works without one."
 
 [dev]
   command = "npm start"

@@ -55,6 +55,25 @@ app.use(cookieParser());
 // This keeps `npm start` self-sufficient for local work.
 app.use(express.static(path.join(ROOT, 'public'), { maxAge: '1h' }));
 
+// Atelier (the apparel design studio under /atelier) is otherwise entirely
+// static. Its one optional endpoint runs as a separate Netlify function in
+// production; mounting the same handler here keeps `npm start` a complete
+// local environment. It sits above the database middleware deliberately — the
+// studio must not need Postgres to run.
+app.all(
+  '/api/assistant',
+  express.json({ limit: '256kb' }),
+  route(async (req, res) => {
+    const { handler } = require('../netlify/functions/assistant');
+    const result = await handler({
+      httpMethod: req.method,
+      body: req.body && Object.keys(req.body).length ? JSON.stringify(req.body) : '',
+      headers: req.headers,
+    });
+    res.status(result.statusCode).set(result.headers || {}).send(result.body);
+  })
+);
+
 // The database schema is applied once per instance, before the first query.
 app.use(
   route(async (req, res, next) => {
