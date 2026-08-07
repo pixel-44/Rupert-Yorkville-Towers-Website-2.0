@@ -28,6 +28,7 @@ import { HARDWARE, FINISHES } from '../catalog/hardware.js';
 import { TYPEFACES, TECHNIQUES } from '../catalog/fonts.js';
 import { GRAPHICS } from '../catalog/graphics.js';
 import { checkOp, normaliseHex, defaultModParams } from '../state/design-state.js';
+import { fitTextSize } from '../render/metrics.js';
 
 // ── Lexicons ──────────────────────────────────────────────────────────────
 
@@ -493,7 +494,8 @@ function matchText(clause, lower, named, state, template, context, result) {
       type: 'addText', zoneId,
       text: content,
       font, technique, curvature,
-      size: size ?? 4,
+      // No size asked for: fit it to the panel rather than guessing a constant.
+      size: size ?? fitTextSize(state.templateId, zoneId, content),
       color: color || '#141417',
       placement: { x: 0.5, y: 0.42, rotation: 0 },
     });

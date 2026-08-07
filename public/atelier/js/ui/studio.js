@@ -20,6 +20,7 @@ import { hardwareOfKind, getHardware, getFinish, FINISHES } from '../catalog/har
 import { typefacesByClass, getTypeface, TECHNIQUES, getTechnique } from '../catalog/fonts.js';
 import { GRAPHICS, getGraphic } from '../catalog/graphics.js';
 import { swatchDataUrl } from '../render/texture-lab.js';
+import { fitTextSize } from '../render/metrics.js';
 import { GarmentViewer, VIEWS } from '../render/scene.js';
 import { assetsReady } from '../render/compositor.js';
 import { severityWord, newId } from '../state/design-state.js';
@@ -325,7 +326,7 @@ export class Studio {
         onclick: () => {
           const res = this.dispatch({
             type: 'addText', zoneId: zone.id, text: 'ATELIER',
-            font: 'geo-caps', size: this.defaultTextSize(zone), color: '#141417',
+            font: 'geo-caps', size: this.defaultTextSize(zone, 'ATELIER'), color: '#141417',
             technique: 'print', placement: { x: 0.5, y: 0.45, rotation: 0 },
           });
           if (res.ok) {
@@ -336,12 +337,9 @@ export class Studio {
       }, '+ Add text'));
   }
 
-  defaultTextSize(zone) {
-    // Cap height that reads at arm's length on the panel it sits on.
-    const metrics = this.viewer.garment?.metrics?.[zone.panel];
-    if (!metrics) return 4;
-    const box = (zone.uv[3] - zone.uv[1]) * metrics.heightCm;
-    return Math.max(1.2, Math.min(9, Math.round(box * 0.16 * 10) / 10));
+  /** Cap height that fits the string inside the panel it sits on. */
+  defaultTextSize(zone, text) {
+    return fitTextSize(this.template.id, zone.id, text);
   }
 
   textEditor(zone, t) {

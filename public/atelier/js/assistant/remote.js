@@ -22,7 +22,12 @@ import { TYPEFACES, TECHNIQUES } from '../catalog/fonts.js';
 import { GRAPHICS } from '../catalog/graphics.js';
 import { validateOps } from './intent.js';
 
-const ENDPOINT = '/api/assistant';
+// Host pages can point this elsewhere, or set it to null to skip the remote
+// path entirely — which is what a static embed with no backend behind it wants,
+// so it never fires a request that can only fail.
+const ENDPOINT = 'ATELIER_ASSISTANT_ENDPOINT' in globalThis
+  ? globalThis.ATELIER_ASSISTANT_ENDPOINT
+  : '/api/assistant';
 const TIMEOUT_MS = 9000;
 
 let availability = null;   // null = unknown, true/false once probed
@@ -30,6 +35,7 @@ let availability = null;   // null = unknown, true/false once probed
 /** Is a remote interpreter configured for this deployment? Probed once. */
 export async function remoteAvailable() {
   if (availability !== null) return availability;
+  if (!ENDPOINT) { availability = false; return false; }
   try {
     const res = await fetch(ENDPOINT, { method: 'GET' });
     if (!res.ok) { availability = false; return false; }

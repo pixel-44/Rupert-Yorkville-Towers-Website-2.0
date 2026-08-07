@@ -122,6 +122,40 @@ export function placementToCm(templateId, zoneId, placement) {
   };
 }
 
+/** Average advance per character, as a fraction of cap height, across the type library. */
+const ADVANCE = 0.83;
+
+/**
+ * Widest a default hit gets, whatever the panel allows.
+ *
+ * Body panels wrap: a torso's width is the whole chest circumference, so
+ * "82% of the zone" is 32 cm of type curling past both side seams. A screen
+ * print or an embroidery hoop tops out around this regardless of the size on
+ * the label, so the physical process is the honest ceiling.
+ */
+const MAX_PRINT_CM = 26;
+
+/**
+ * A cap height that keeps a string inside its zone and on the front of the body.
+ *
+ * Used whenever a size was not asked for. Without it, a default that suits "AB"
+ * sends "MADE TO ORDER" wrapping around the torso — the common case, since most
+ * strings people ask for are longer than two letters.
+ *
+ * The estimate is deliberately rough; the exact face is not known until the
+ * text is rasterised. Erring small is the right failure — scaling type up is a
+ * deliberate act, type silently running off the garment is a bug.
+ */
+export function fitTextSize(templateId, zoneId, text, { fraction = 0.62, max = 12 } = {}) {
+  const m = zoneMetrics(templateId, zoneId);
+  if (!m) return 4;
+  const chars = Math.max(1, String(text || '').length);
+  const drawWidthCm = Math.min(m.widthCm * fraction, MAX_PRINT_CM);
+  const byWidth = drawWidthCm / (chars * ADVANCE);
+  const byHeight = m.heightCm * 0.4;
+  return Math.max(0.8, round1(Math.min(max, byWidth, byHeight)));
+}
+
 /** One line describing where something sits, for the itemised spec list. */
 export function describePlacement(templateId, zoneId, placement) {
   const p = placementToCm(templateId, zoneId, placement);
