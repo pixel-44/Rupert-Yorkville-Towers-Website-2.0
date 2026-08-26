@@ -48,6 +48,32 @@ app.use(
     },
   })
 );
+// The XANADU camera page is a self-contained static app under public/. It pulls
+// TensorFlow.js and a webfont from CDNs, which the board's own 'self'-only policy
+// forbids, so it gets its own policy instead of relaxing the one above. On Netlify
+// the CDN serves public/ directly and never sees these headers; this is what makes
+// the page work under `npm start` too.
+app.use('/xanadu', (req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      // TensorFlow.js compiles its WebGL shaders and WASM backend at runtime,
+      // which counts as eval. Without these two it cannot initialise at all.
+      "script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src https://fonts.gstatic.com",
+      "img-src 'self' data:",
+      "media-src 'self' blob:",
+      // MoveNet's weights are fetched from Google's model storage, not the CDN.
+      "connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://tfhub.dev https://www.kaggle.com",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+    ].join('; ')
+  );
+  next();
+});
+
 app.use(express.urlencoded({ extended: false, limit: '128kb' }));
 app.use(cookieParser());
 
